@@ -13,12 +13,15 @@ type IState interface {
 
 // implements IFSM
 type GameObjectFSM struct {
+	GameObject *GameObject
 	CurrentState IState
 	States map[string]*GameObjectState
 }
 
 func (gameObjectFSM *GameObjectFSM) NewState(tag string) *GameObjectState{
-	state := &GameObjectState{}
+	state := &GameObjectState{
+		GameObjectFSM: gameObjectFSM,
+	}
 	gameObjectFSM.States[tag] = state
 	if gameObjectFSM.CurrentState == nil{
 		gameObjectFSM.CurrentState = state
@@ -33,6 +36,7 @@ func (gameObjectFSM *GameObjectFSM) Process(){
 
 // implements IState
 type GameObjectState struct {
+	GameObjectFSM *GameObjectFSM
 	// the components attached to this current state
 	Components []IComponent
 }
@@ -46,6 +50,8 @@ func (gameObjectState *GameObjectState) Process(){
 }
 
 func (gameObjectState *GameObjectState) With(component IComponent) *GameObjectState{
+	// use reflection to set the GameObject field of the component
+	Field("GameObject", FieldIndex(0, ValuePtr(component))).Set(Value(gameObjectState.GameObjectFSM.GameObject))
 	gameObjectState.Components = append(gameObjectState.Components, component)
 	return gameObjectState
 }

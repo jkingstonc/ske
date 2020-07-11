@@ -15,6 +15,7 @@ func (goManager *GOManager) NewGameObject() *GameObject{
 			States: make(map[string]*GameObjectState),
 		},
 	}
+	gameObject.FSM.GameObject = gameObject
 	goManager.GameObjects = append(goManager.GameObjects, gameObject)
 	return gameObject
 }

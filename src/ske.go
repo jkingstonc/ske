@@ -17,6 +17,10 @@ func (Ske *Ske) NewGameObject() *GameObject{
 	return Ske.goManager.NewGameObject()
 }
 
+func (Ske *Ske) MakePrefab(tag string, gameObject *GameObject){}
+
+func (Ske *Ske) NewPrefab(tag string){}
+
 func (Ske *Ske) Run(){
 	Ske.running = true
 	// this is the main game loop
