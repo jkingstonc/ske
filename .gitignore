@@ -1,0 +1,4 @@
+*.txt
+.idea
+.vscode
+main.go
