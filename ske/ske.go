@@ -1,17 +1,19 @@
 package ske
 
-
+import "os"
 
 var (
 	Events *EventManager
 	Inputs *InputManager
+	// TODO link scenes with ECS correctly0
 	ECS    *EntityManager
+	Scenes *SceneManager
     Loader *FileManager
 )
 
 const (
 	// where assets should be loaded from
-	AssetsRoot = "./"
+	AssetsRoot = "F:\\OneDrive\\Programming\\GO\\src\\ske\\"
 )
 
 
@@ -45,9 +47,11 @@ func NewSKE(options *SkeOptions) *Ske{
 		Entities: nil,
 	}
 
+	Scenes = &SceneManager{}
+
 	Events = &EventManager{Listeners: make(map[string][]func(event Event))}
 
-	Loader = &FileManager{}
+	Loader = &FileManager{LoadedFiles: make(map[string]*os.File)}
 
 	return ske
 }
@@ -60,7 +64,7 @@ func (ske *Ske) RegisterScene(scene Scene){
 func (Ske *Ske) Run(){
 
 	// go to the first scene
-	Ske.runtime.ToScene(Ske.runtime.activeScene.Tag(), false)
+	Scenes.ToFirstScene()
 
 	Ske.running = true
 	// this is the main game loop
