@@ -1,5 +1,20 @@
 package ske
 
+
+
+var (
+	Events *EventManager
+	Inputs *InputManager
+	ECS    *EntityManager
+    Loader *FileManager
+)
+
+const (
+	// where assets should be loaded from
+	AssetsRoot = "./"
+)
+
+
 // this is the main driver struct, it will be used to drive the entire engine
 type Ske struct {
 	running   bool
@@ -14,34 +29,43 @@ type SkeOptions struct {
 }
 
 func NewSKE(options *SkeOptions) *Ske{
-	return &Ske{
+
+
+	ske := &Ske{
 		running:   false,
 		runtime: &Runtime{
-			EntityManager:   &EntityManager{},
-			//screen:      nil,
 			scenes:      make(map[string]Scene),
 			activeScene: nil,
 		},
+		options: options,
 	}
+
+	ECS = &EntityManager{
+		Runtime:  ske.runtime,
+		Entities: nil,
+	}
+
+	Events = &EventManager{Listeners: make(map[string][]func(event Event))}
+
+	Loader = &FileManager{}
+
+	return ske
 }
 
 // register a scene to the game
 func (ske *Ske) RegisterScene(scene Scene){
-	ske.runtime.scenes[scene.Tag()] = scene
-	if ske.runtime.activeScene == nil{
-		ske.runtime.activeScene = scene
-	}
+	ske.runtime.RegisterScene(scene)
 }
 
 func (Ske *Ske) Run(){
 
 	// go to the first scene
-	Ske.runtime.ToScene(Ske.runtime.activeScene.Tag())
+	Ske.runtime.ToScene(Ske.runtime.activeScene.Tag(), false)
 
 	Ske.running = true
 	// this is the main game loop
 	for Ske.running{
-		Ske.runtime.EntityManager.Update()
+		ECS.Update()
 	}
 	Ske.running = false
 }

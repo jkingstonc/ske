@@ -8,8 +8,10 @@ import (
 // note this is not an ECS, it is an EC. the entity logic is
 // wrapped inside the components.
 type EntityManager struct {
-	// store the array of Entitys
-	Entitys []*Entity
+	// reference to the runtime
+	Runtime *Runtime
+	// store the array of Entities
+	Entities []*Entity
 }
 
 func (EntityManager *EntityManager) NewEntity(tag string) *Entity{
@@ -18,17 +20,18 @@ func (EntityManager *EntityManager) NewEntity(tag string) *Entity{
 		Tag: tag,
 		Components: nil,
 	}
-	EntityManager.Entitys = append(EntityManager.Entitys, Entity)
+	EntityManager.Entities = append(EntityManager.Entities, Entity)
 	return Entity
 }
 
 func (EntityManager *EntityManager) Update(){
-	for _, Entity := range EntityManager.Entitys{
+	for _, Entity := range EntityManager.Entities{
 		Entity.Update()
 	}
 }
 
 type IComponent interface {
+	OnLoad()
 	Update()
 }
 
@@ -49,6 +52,12 @@ type Entity struct {
 func (e *Entity) Update(){
 	for _, component := range e.Components{
 		component.Update()
+	}
+}
+
+func (e *Entity) NewComponent() Component{
+	return Component{
+		Entity:  e,
 	}
 }
 
