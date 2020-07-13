@@ -1,6 +1,7 @@
 package ske
 
 import (
+	"encoding/json"
 	"reflect"
 )
 
@@ -8,13 +9,40 @@ import (
 // note this is not an ECS, it is an EC. the entity logic is
 // wrapped inside the components.
 type EntityManager struct {
-	// reference to the runtime
-	Runtime *Runtime
 	// store the array of Entities
 	Entities []*Entity
 }
 
-func (EntityManager *EntityManager) NewEntity(tag string) *Entity{
+func Serialize(entity *Entity) []byte{
+	bytes, err := json.Marshal(entity)
+	Assert(err==nil, "couldn't marshal entity to JSON")
+	return bytes
+}
+
+func Deserialize(path string) *Entity{
+	bytes := ReadRaw(path)
+	var entity *Entity
+	err := json.Unmarshal(bytes, &entity)
+	Log(err)
+	Assert(err==nil, "couldn't unmarshal entity JSON")
+	return entity
+}
+
+// instantiate a prefab
+func (EntityManager *EntityManager) Instantiate(tag string) *Entity {
+	// deserialize an entity from a file path
+	entity := Deserialize("prefabs/"+tag+".prefab")
+	return entity
+}
+
+// turn an entity into a prefab
+func (EntityManager *EntityManager) MakePrefab(entity *Entity) {
+	// serialize the prefab and store it in the assets package
+	bytes := Serialize(entity)
+	WriteRaw("prefabs/"+entity.Tag+".prefab", bytes)
+}
+
+func (EntityManager *EntityManager) NewEntity(tag string) *Entity {
 	Entity := &Entity{
 		ID:  0,
 		Tag: tag,
@@ -55,7 +83,7 @@ func (e *Entity) Update(){
 	}
 }
 
-func (e *Entity) NewComponent() Component{
+func (e *Entity) NewComponent() Component {
 	return Component{
 		Entity:  e,
 	}
@@ -69,7 +97,7 @@ func (e *Entity) Attach(component IComponent){
 func (e *Entity) Detach(component IComponent){
 }
 
-func (e *Entity) GetComponent(t reflect.Type) IComponent{
+func (e *Entity) GetComponent(t reflect.Type) IComponent {
 	for _, c := range e.Components{
 		if reflect.TypeOf(c) == t{
 			return c

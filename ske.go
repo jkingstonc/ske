@@ -1,6 +1,8 @@
 package ske
 
-import "os"
+import (
+	"os"
+)
 
 var (
 	Events *EventManager
@@ -13,14 +15,13 @@ var (
 
 const (
 	// where assets should be loaded from
-	AssetsRoot = "F:\\OneDrive\\Programming\\GO\\src\\ske\\"
+	AssetsRoot = "F:\\OneDrive\\Programming\\GO\\src\\ske\\examples\\assets\\"
 )
 
 
 // this is the main driver struct, it will be used to drive the entire engine
 type Ske struct {
 	running   bool
-	runtime   *Runtime
 	options   *SkeOptions
 }
 
@@ -30,20 +31,15 @@ type SkeOptions struct {
 	Height int
 }
 
-func NewSKE(options *SkeOptions) *Ske{
+func NewSKE(options *SkeOptions) *Ske {
 
 
 	ske := &Ske{
 		running:   false,
-		runtime: &Runtime{
-			scenes:      make(map[string]Scene),
-			activeScene: nil,
-		},
 		options: options,
 	}
 
 	ECS = &EntityManager{
-		Runtime:  ske.runtime,
 		Entities: nil,
 	}
 
@@ -54,11 +50,6 @@ func NewSKE(options *SkeOptions) *Ske{
 	Loader = &FileManager{LoadedFiles: make(map[string]*os.File)}
 
 	return ske
-}
-
-// register a scene to the game
-func (ske *Ske) RegisterScene(scene Scene){
-	ske.runtime.RegisterScene(scene)
 }
 
 func (Ske *Ske) Run(){
