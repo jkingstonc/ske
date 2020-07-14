@@ -61,9 +61,15 @@ func (v Vec) Div(other interface{}) Vec {
 			return Vec{v.X / o, v.Y / o, v.Z / o, v.W / o}
 		}
 		return v
+	case int:
+		if o != 0 {
+			return Vec{v.X / float64(o), v.Y / float64(o), v.Z / float64(o), v.W / float64(o)}
+		}
+		return v
 	case Vec:
 		return Vec{v.X / o.X, v.Y / o.Y, v.Z / o.Z, v.W / o.W}
 	}
+	Assert(false, "cannot div, unknown interface{} type")
 	return Vec{}
 }
 

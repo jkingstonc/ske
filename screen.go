@@ -148,10 +148,10 @@ func (s *SDLScreen) DrawRectWorld(v1, size, col Vec, flags uint8) {
 
 // draw a single instance of a drawable
 // NOTE the drawing convention is that pos stores the coordinates, NOT the x & y and w & h
-func (s *SDLScreen) DrawTextureScreen(v1, v2 Vec, resource Resource, angle float64) {
+func (s *SDLScreen) DrawTextureScreen(v1, v2 Vec, texture *sdl.Texture, angle float64) {
 	drawable := Drawable{
 		Type:  D_TEXTURE,
-		Data:  resource.(*Texture).Data,
+		Data:  texture,
 		V1:    v1,
 		V2:    v2,
 		Angle: angle,
@@ -162,12 +162,12 @@ func (s *SDLScreen) DrawTextureScreen(v1, v2 Vec, resource Resource, angle float
 	s.ZBuf.Layers[int(v1.Z)].Drawables = append(s.ZBuf.Layers[int(v1.Z)].Drawables, drawable)
 }
 
-func (s *SDLScreen) DrawTextureWorld(v1, size Vec, resource Resource, angle float64) {
+func (s *SDLScreen) DrawTextureWorld(v1, size Vec, texture *sdl.Texture, angle float64) {
 	// get the world projection
 	pos1, pos2 := s.project(v1, size)
 	drawable := Drawable{
 		Type:  D_TEXTURE,
-		Data:  resource.(*Texture).Data,
+		Data:  texture,
 		V1:    pos1,
 		V2:    pos2,
 		Angle: angle,
@@ -263,6 +263,29 @@ func (s *SDLScreen) PollEvents() {
 func (s *SDLScreen) RendererPrepare() {
 	s.Renderer.SetDrawColor(0, 0, 0, 0)
 	s.Renderer.Clear()
+}
+
+func (s *SDLScreen) FetchMeshComponents(){
+	for _, entity := range ECS.Entities{
+		if entity.Active{
+			// fetch the transform and the mesh of the entity
+			var transform, mesh IComponent
+			for _, component := range entity.Components{
+				switch c:=component.(type){
+				case *MeshComponent:
+					mesh = c
+				case *TransformComponent:
+					transform = c
+				}
+			}
+			// if the entity has a mesh, and a transform, then draw it
+			if transform != nil && mesh != nil{
+				t := transform.(*TransformComponent)
+				m := mesh.(*MeshComponent)
+				s.DrawTextureScreen(t.Pos.Sub(m.Texture.Size.Div(2)), t.Pos.Add(m.Texture.Size.Div(2)), m.Texture.Data, 0)
+			}
+		}
+	}
 }
 
 // method to actually draw to the screen. called once per frame

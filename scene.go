@@ -51,9 +51,14 @@ func (s *SceneManager) ToScene(tag string, save bool){
 			s.active = sceneRuntime
 			// set the ECS to the scene's runtime EntityManager
 			ECS = sceneRuntime.ECS
-			// then call OnLoad on the scene if the scene wasn't saved
+			// then call OnLoad on the scene if the scene wasn't saved, aswel as the components in the scene
 			if !sceneRuntime.Saved {
 				sceneRuntime.Scene.OnLoad()
+				for _, entity := range sceneRuntime.ECS.Entities{
+					for _, component := range entity.Components{
+						component.OnLoad()
+					}
+				}
 			}
 			found = true
 		}

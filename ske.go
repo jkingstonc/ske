@@ -1,6 +1,9 @@
 package ske
 
+import "time"
+
 var (
+	DT     float64
 	Engine *Ske
 	Events *EventManager
 	Inputs *InputManager
@@ -9,6 +12,8 @@ var (
 	Scenes *SceneManager
     Loader *FileManager
 	Screen *SDLScreen
+
+	previousTime time.Time
 )
 
 const (
@@ -59,14 +64,19 @@ func NewSKE(options *SkeOptions) *Ske {
 func (ske *Ske) Run(scene string){
 	// go to the first scene
 	Scenes.ToScene(scene, false)
-
 	ske.running = true
 	// this is the main game loop
 	for ske.running{
+		dt := time.Since(previousTime).Seconds()
+		previousTime = time.Now()
+		if dt != 0 {
+			DT = dt
+		}
 		Inputs.Update()
 		Screen.PollEvents()
 		Screen.RendererPrepare()
 		Scenes.Update()
+		Screen.FetchMeshComponents()
 		Screen.RendererFlush()
 	}
 	ske.running = false
