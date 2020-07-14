@@ -24,6 +24,8 @@ func SDLKeyToString(keycode sdl.Keycode) string{
 	switch int(keycode){
 	case 27:
 		return "escape"
+	case 32:
+		return "space"
 	default:
 		return string(rune(keycode))
 	}

@@ -7,8 +7,9 @@ import (
 )
 
 type Camera struct {
-	Pos  Vec
-	Zoom float64
+	Pos      Vec
+	Zoom     float64
+	Rotation float64
 }
 
 //// SDL implementation of a renderer
@@ -25,14 +26,14 @@ var (
 )
 
 const (
-	UNIT_SIZE float64 = 50
+	UNIT_SIZE float64 = 1
 
 	NOFILL = 0x1 << 0
 	FILL   = 0x1 << 1
 
 	FLIP = 0x1 << 0
 
-	// max of 100 drawables per layer
+	// max of 100 BufferedDatas per layer
 	MAX_LAYER_DRAWS = 100
 
 	D_RECT    = 0x0
@@ -42,10 +43,10 @@ const (
 )
 
 type Layer struct {
-	Drawables []Drawable
+	BufferedDatas []BufferedData
 }
 
-type Drawable struct {
+type BufferedData struct {
 	Type   uint8
 	Data   interface{}
 	Colour Vec
@@ -114,11 +115,11 @@ func (s*SDLScreen) project(v, size Vec) (Vec, Vec) {
 	return pos1, pos2
 }
 
-// draw a single instance of a drawable
+// draw a single instance of a BufferedData
 // NOTE the drawing convention is that pos stores the coordinates, NOT the x & y and w & h
 // TODO implement a z buffer
 func (s *SDLScreen) DrawRectScreen(v1, v2 Vec, col Vec, flags uint8) {
-	drawable := Drawable{
+	BufferedData := BufferedData{
 		Type:   D_RECT,
 		Colour: col,
 		Flags:  flags,
@@ -127,13 +128,13 @@ func (s *SDLScreen) DrawRectScreen(v1, v2 Vec, col Vec, flags uint8) {
 	}
 	// add more layers until we get the desired z-depth
 	s.matchLayers(int(v1.Z))
-	// add the drawable to the layer
-	s.ZBuf.Layers[int(v1.Z)].Drawables = append(s.ZBuf.Layers[int(v1.Z)].Drawables, drawable)
+	// add the BufferedData to the layer
+	s.ZBuf.Layers[int(v1.Z)].BufferedDatas = append(s.ZBuf.Layers[int(v1.Z)].BufferedDatas, BufferedData)
 }
 
 func (s *SDLScreen) DrawRectWorld(v1, size, col Vec, flags uint8) {
 	pos1, pos2 := s.project(v1, size)
-	drawable := Drawable{
+	BufferedData := BufferedData{
 		Type:   D_RECT,
 		Colour: col,
 		Flags:  flags,
@@ -142,14 +143,14 @@ func (s *SDLScreen) DrawRectWorld(v1, size, col Vec, flags uint8) {
 	}
 	// add more layers until we get the desired z-depth
 	s.matchLayers(int(v1.Z))
-	// add the drawable to the layer
-	s.ZBuf.Layers[int(v1.Z)].Drawables = append(s.ZBuf.Layers[int(v1.Z)].Drawables, drawable)
+	// add the BufferedData to the layer
+	s.ZBuf.Layers[int(v1.Z)].BufferedDatas = append(s.ZBuf.Layers[int(v1.Z)].BufferedDatas, BufferedData)
 }
 
-// draw a single instance of a drawable
+// draw a single instance of a BufferedData
 // NOTE the drawing convention is that pos stores the coordinates, NOT the x & y and w & h
 func (s *SDLScreen) DrawTextureScreen(v1, v2 Vec, texture *sdl.Texture, angle float64) {
-	drawable := Drawable{
+	BufferedData := BufferedData{
 		Type:  D_TEXTURE,
 		Data:  texture,
 		V1:    v1,
@@ -158,14 +159,14 @@ func (s *SDLScreen) DrawTextureScreen(v1, v2 Vec, texture *sdl.Texture, angle fl
 	}
 	// add more layers until we get the desired z-depth
 	s.matchLayers(int(v1.Z))
-	// add the drawable to the layer
-	s.ZBuf.Layers[int(v1.Z)].Drawables = append(s.ZBuf.Layers[int(v1.Z)].Drawables, drawable)
+	// add the BufferedData to the layer
+	s.ZBuf.Layers[int(v1.Z)].BufferedDatas = append(s.ZBuf.Layers[int(v1.Z)].BufferedDatas, BufferedData)
 }
 
 func (s *SDLScreen) DrawTextureWorld(v1, size Vec, texture *sdl.Texture, angle float64) {
 	// get the world projection
 	pos1, pos2 := s.project(v1, size)
-	drawable := Drawable{
+	BufferedData := BufferedData{
 		Type:  D_TEXTURE,
 		Data:  texture,
 		V1:    pos1,
@@ -174,13 +175,13 @@ func (s *SDLScreen) DrawTextureWorld(v1, size Vec, texture *sdl.Texture, angle f
 	}
 	// add more layers until we get the desired z-depth
 	s.matchLayers(int(v1.Z))
-	// add the drawable to the layer
-	s.ZBuf.Layers[int(v1.Z)].Drawables = append(s.ZBuf.Layers[int(v1.Z)].Drawables, drawable)
+	// add the BufferedData to the layer
+	s.ZBuf.Layers[int(v1.Z)].BufferedDatas = append(s.ZBuf.Layers[int(v1.Z)].BufferedDatas, BufferedData)
 }
 
 // draw a line between points v1 and v2 with a colour
 func (s *SDLScreen) DrawLineScreen(v1, v2 Vec, col Vec) {
-	drawable := Drawable{
+	BufferedData := BufferedData{
 		Type:   D_LINE,
 		Colour: col,
 		V1:     v1,
@@ -188,15 +189,15 @@ func (s *SDLScreen) DrawLineScreen(v1, v2 Vec, col Vec) {
 	}
 	// add more layers until we get the desired z-depth
 	s.matchLayers(int(v1.Z))
-	// add the drawable to the layer
-	s.ZBuf.Layers[int(v1.Z)].Drawables = append(s.ZBuf.Layers[int(v1.Z)].Drawables, drawable)
+	// add the BufferedData to the layer
+	s.ZBuf.Layers[int(v1.Z)].BufferedDatas = append(s.ZBuf.Layers[int(v1.Z)].BufferedDatas, BufferedData)
 }
 
 // draw a line between points v1 and v2 with a colour
 func (s *SDLScreen) DrawLineWorld(v1, v2 Vec, col Vec) {
 	pos1 := s.WorldToScreen(v1)
 	pos2 := s.WorldToScreen(v2)
-	drawable := Drawable{
+	BufferedData := BufferedData{
 		Type:   D_LINE,
 		Colour: col,
 		V1:     pos1,
@@ -204,8 +205,8 @@ func (s *SDLScreen) DrawLineWorld(v1, v2 Vec, col Vec) {
 	}
 	// add more layers until we get the desired z-depth
 	s.matchLayers(int(v1.Z))
-	// add the drawable to the layer
-	s.ZBuf.Layers[int(v1.Z)].Drawables = append(s.ZBuf.Layers[int(v1.Z)].Drawables, drawable)
+	// add the BufferedData to the layer
+	s.ZBuf.Layers[int(v1.Z)].BufferedDatas = append(s.ZBuf.Layers[int(v1.Z)].BufferedDatas, BufferedData)
 }
 
 // Get the mouse position in the screen
@@ -266,23 +267,43 @@ func (s *SDLScreen) RendererPrepare() {
 }
 
 func (s *SDLScreen) FetchMeshComponents(){
+	// fetch the camera entity
+
+
 	for _, entity := range ECS.Entities{
 		if entity.Active{
+
+
+
+
 			// fetch the transform and the mesh of the entity
-			var transform, mesh IComponent
+			var transform, mesh, camera IComponent
 			for _, component := range entity.Components{
 				switch c:=component.(type){
 				case *MeshComponent:
 					mesh = c
 				case *TransformComponent:
 					transform = c
+				case *CameraComponent:
+					camera = c
 				}
 			}
+
+			//if the entity has a camera component, then update the screen camera
+			if camera != nil && transform != nil{
+				s.Cam.Pos = transform.(*TransformComponent).Pos
+				s.Cam.Rotation = transform.(*TransformComponent).Rot
+			}
+
 			// if the entity has a mesh, and a transform, then draw it
 			if transform != nil && mesh != nil{
 				t := transform.(*TransformComponent)
 				m := mesh.(*MeshComponent)
-				s.DrawTextureScreen(t.Pos.Sub(m.Texture.Size.Div(2)), t.Pos.Add(m.Texture.Size.Div(2)), m.Texture.Data, 0)
+
+				// get the drawable from the mesh
+				// TODO for now we assume its a texture
+				texture := m.Drawable.(*Texture)
+				s.DrawTextureWorld(t.Pos.Sub(texture.Size.Div(2)), t.Pos.Add(texture.Size.Div(2)), texture.Data, 0)
 			}
 		}
 	}
@@ -291,28 +312,28 @@ func (s *SDLScreen) FetchMeshComponents(){
 // method to actually draw to the screen. called once per frame
 func (s *SDLScreen) RendererFlush() {
 	var previousColour Vec
-	// iterate over each layer and the drawable in that layer
+	// iterate over each layer and the BufferedData in that layer
 	for _, layer := range s.ZBuf.Layers {
-		for _, drawable := range layer.Drawables {
+		for _, BufferedData := range layer.BufferedDatas {
 			// set the colour
-			if !drawable.Colour.Equals(previousColour) {
-				previousColour = drawable.Colour
+			if !BufferedData.Colour.Equals(previousColour) {
+				previousColour = BufferedData.Colour
 			}
 			s.Renderer.SetDrawColor(uint8(previousColour.X), uint8(previousColour.Y), uint8(previousColour.Z), uint8(previousColour.W))
 			// actually call SDL draw function
-			switch drawable.Type {
+			switch BufferedData.Type {
 			case D_RECT:
-				if drawable.Flags&NOFILL > 0 {
-					s.Renderer.DrawRect(&sdl.Rect{int32(drawable.V1.X), int32(drawable.V1.Y), int32(drawable.V2.X - drawable.V1.X), int32(drawable.V2.Y - drawable.V1.Y)})
+				if BufferedData.Flags&NOFILL > 0 {
+					s.Renderer.DrawRect(&sdl.Rect{int32(BufferedData.V1.X), int32(BufferedData.V1.Y), int32(BufferedData.V2.X - BufferedData.V1.X), int32(BufferedData.V2.Y - BufferedData.V1.Y)})
 				} else {
-					s.Renderer.FillRect(&sdl.Rect{int32(drawable.V1.X), int32(drawable.V1.Y), int32(drawable.V2.X - drawable.V1.X), int32(drawable.V2.Y - drawable.V1.Y)})
+					s.Renderer.FillRect(&sdl.Rect{int32(BufferedData.V1.X), int32(BufferedData.V1.Y), int32(BufferedData.V2.X - BufferedData.V1.X), int32(BufferedData.V2.Y - BufferedData.V1.Y)})
 				}
 				break
 			case D_LINE:
-				s.Renderer.DrawLine(int32(drawable.V1.X), int32(drawable.V1.Y), int32(drawable.V2.X), int32(drawable.V2.Y))
+				s.Renderer.DrawLine(int32(BufferedData.V1.X), int32(BufferedData.V1.Y), int32(BufferedData.V2.X), int32(BufferedData.V2.Y))
 				break
 			case D_TEXTURE:
-				s.Renderer.CopyEx(drawable.Data.(*sdl.Texture), nil, &sdl.Rect{int32(drawable.V1.X), int32(drawable.V1.Y), int32(drawable.V2.X - drawable.V1.X), int32(drawable.V2.Y - drawable.V1.Y)}, drawable.Angle, nil, sdl.FLIP_NONE)
+				s.Renderer.CopyEx(BufferedData.Data.(*sdl.Texture), nil, &sdl.Rect{int32(BufferedData.V1.X), int32(BufferedData.V1.Y), int32(BufferedData.V2.X - BufferedData.V1.X), int32(BufferedData.V2.Y - BufferedData.V1.Y)}, BufferedData.Angle, nil, sdl.FLIP_NONE)
 				break
 			}
 		}

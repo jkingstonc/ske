@@ -20,6 +20,11 @@ func (f*FileManager) Load(paths... string){
 		case ".jpg":
 			texture := Screen.LoadTexture(AssetsRoot +path)
 			f.LoadedFiles[path]=texture
+		case ".atlas":
+			texture := Screen.LoadTexture(AssetsRoot +path)
+			f.LoadedFiles[path]=&Atlas{
+				Texture:   texture,
+			}
 		}
 	}
 }

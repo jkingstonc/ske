@@ -4,7 +4,7 @@ package ske
 type TransformComponent struct {
 	Component
 	Pos   Vec
-	Rot   Vec
+	Rot   float64
 	Scale Vec
 }
 
