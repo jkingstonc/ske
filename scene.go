@@ -40,8 +40,11 @@ func (s *SceneManager) Register(scenes... Scene){
 // switch to another scene
 func (s *SceneManager) ToScene(tag string, save bool){
 	// if we don't want to save the scene, then we clear the entities
-	if !save && s.active != nil{
-		s.active.ECS.Entities = nil
+	if s.active != nil{
+		s.active.Saved = save
+		if !save{
+			s.active.ECS.Entities = nil
+		}
 	}
 	found := false
 	// then set the new scene
