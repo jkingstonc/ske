@@ -32,9 +32,6 @@ func (s *SceneManager) Register(scenes... Scene){
 			ECS:   &EntityManager{},
 		}
 		s.registered = append(s.registered, runtime)
-		if s.active == nil {
-			s.active = runtime
-		}
 		// call setup on each scene that is registered
 		scene.Setup()
 	}
@@ -43,7 +40,7 @@ func (s *SceneManager) Register(scenes... Scene){
 // switch to another scene
 func (s *SceneManager) ToScene(tag string, save bool){
 	// if we don't want to save the scene, then we clear the entities
-	if !save{
+	if !save && s.active != nil{
 		s.active.ECS.Entities = nil
 	}
 	found := false

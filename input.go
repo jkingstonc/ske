@@ -30,7 +30,7 @@ func SDLKeyToString(keycode sdl.Keycode) string{
 }
 
 func SDLButtonToString(button uint8) string{
-	return fmt.Sprintf("button%d",button)
+	return fmt.Sprintf("mouse%d",button)
 }
 
 func (i*InputManager) SetActive(button string, interaction uint8, data interface{}){

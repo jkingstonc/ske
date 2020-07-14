@@ -40,29 +40,25 @@ func (s*Ske) Options() *SkeOptions{
 
 func NewSKE(options *SkeOptions) *Ske {
 
-
-	ske := &Ske{
+	Engine = &Ske{
 		running:   false,
 		options: options,
 	}
 
-
 	Screen = &SDLScreen{}
+	Screen.Setup()
 
 	Scenes = &SceneManager{}
 	Events = &EventManager{Listeners: make(map[string][]func(event Event))}
 	Inputs = &InputManager{}
 	Loader = &FileManager{LoadedFiles: make(map[string]Resource)}
 
-	Engine = ske
-	return ske
+	return Engine
 }
 
-func (ske *Ske) Run(){
-	// setup the screen
-	Screen.Setup()
+func (ske *Ske) Run(scene string){
 	// go to the first scene
-	Scenes.ToFirstScene()
+	Scenes.ToScene(scene, false)
 
 	ske.running = true
 	// this is the main game loop

@@ -18,8 +18,8 @@ func (f*FileManager) Load(paths... string){
 		case ".png":
 			fallthrough
 		case ".jpg":
-			_, err := os.Open(AssetsRoot +path)
-			Assert(err==nil, "cannot open file")
+			texture := Screen.LoadTexture(AssetsRoot +path)
+			f.LoadedFiles[path]=texture
 		}
 	}
 }

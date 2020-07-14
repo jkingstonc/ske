@@ -1,6 +1,7 @@
 package ske
 
 import (
+	"github.com/veandco/go-sdl2/img"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 )
@@ -327,4 +328,22 @@ func (s *SDLScreen) Close() {
 	s.Renderer.Destroy()
 	s.Window.Destroy()
 	sdl.Quit()
+}
+
+// Load a texture and return the texture data
+func (s *SDLScreen) LoadTexture(path string) *Texture {
+	// Load the image into memory
+	surfaceImg, err := img.Load(path)
+	Assert(err==nil, "cannot load image into surface")
+	width := surfaceImg.W
+	height := surfaceImg.H
+	// Put the image on the GPU
+	texture, err := s.Renderer.CreateTextureFromSurface(surfaceImg)
+	Assert(err==nil, "cannot create texture from surface")
+	// Free the surface in RAM, texture remains in GPU
+	surfaceImg.Free()
+	return &Texture{
+		Data: texture,
+		Size: V2(float64(width), float64(height)),
+	}
 }
