@@ -1,4 +1,5 @@
 package ske
+//package ske
 //
 //import (
 //	"fmt"
@@ -6,6 +7,19 @@ package ske
 //
 //	"github.com/veandco/go-sdl2/sdl"
 //	"github.com/veandco/go-sdl2/ttf"
+//)
+//
+//// SDL implementation of a renderer
+//type SDLScreen struct {
+//	Window   *sdl.Window
+//	Renderer *sdl.Renderer
+//	ZBuf     ZBuffer
+//}
+//
+//var (
+//	Screen   *SDLScreen
+//	Width    int32 = 800
+//	Height   int32 = 600
 //)
 //
 //const (
@@ -16,8 +30,6 @@ package ske
 //
 //	FLIP = 0x1 << 0
 //
-//	// for testing, a max of 10 layers
-//	MAX_Z_BUFFERS = 10
 //	// max of 100 drawables per layer
 //	MAX_LAYER_DRAWS = 100
 //
@@ -25,11 +37,6 @@ package ske
 //	D_LINE    = 0x1
 //	D_TEXTURE = 0x2
 //	D_TEXT    = 0x3
-//)
-//
-//var (
-//	Width    int32 = 800
-//	Height   int32 = 600
 //)
 //
 //type Layer struct {
@@ -49,13 +56,6 @@ package ske
 //// store sorted layers
 //type ZBuffer struct {
 //	Layers []Layer
-//}
-//
-//// SDL implementation of a renderer
-//type Screen struct {
-//	Window   *sdl.Window
-//	Renderer *sdl.Renderer
-//	ZBuf     ZBuffer
 //}
 //
 //// iteratively add layers to the z-buffer until it matches the desired z-value

@@ -1,9 +1,5 @@
 package ske
 
-import (
-	"os"
-)
-
 var (
 	Events *EventManager
 	Inputs *InputManager
@@ -39,15 +35,11 @@ func NewSKE(options *SkeOptions) *Ske {
 		options: options,
 	}
 
-	ECS = &EntityManager{
-		Entities: nil,
-	}
-
 	Scenes = &SceneManager{}
 
 	Events = &EventManager{Listeners: make(map[string][]func(event Event))}
 
-	Loader = &FileManager{LoadedFiles: make(map[string]*os.File)}
+	Loader = &FileManager{LoadedFiles: make(map[string]Resource)}
 
 	return ske
 }
@@ -60,7 +52,7 @@ func (Ske *Ske) Run(){
 	Ske.running = true
 	// this is the main game loop
 	for Ske.running{
-		ECS.Update()
+		Scenes.Update()
 	}
 	Ske.running = false
 }

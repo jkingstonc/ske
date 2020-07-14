@@ -45,6 +45,7 @@ func (EntityManager *EntityManager) MakePrefab(entity *Entity) {
 func (EntityManager *EntityManager) NewEntity(tag string) *Entity {
 	Entity := &Entity{
 		ID:  0,
+		Active: true,
 		Tag: tag,
 		Components: nil,
 	}
@@ -53,8 +54,10 @@ func (EntityManager *EntityManager) NewEntity(tag string) *Entity {
 }
 
 func (EntityManager *EntityManager) Update(){
-	for _, Entity := range EntityManager.Entities{
-		Entity.Update()
+	for _, entity := range EntityManager.Entities{
+		if entity.Active {
+			entity.Update()
+		}
 	}
 }
 
@@ -73,8 +76,14 @@ type Entity struct {
 	ID uint32
 	// string tag
 	Tag string
+	// should the entity be updated
+	Active bool
 	// the components attached to the entity
 	Components []IComponent
+	// the children attached to the entity
+	Children   []*Entity
+	// the parent of this entity, can be nil
+	Parent     *Entity
 }
 
 func (e *Entity) Update(){
@@ -89,8 +98,10 @@ func (e *Entity) NewComponent() Component {
 	}
 }
 
-func (e *Entity) Attach(component IComponent){
-	e.Components = append(e.Components, component)
+func (e *Entity) Attach(components... IComponent){
+	for _, component := range components {
+		e.Components = append(e.Components, component)
+	}
 }
 
 // TODO
@@ -104,4 +115,23 @@ func (e *Entity) GetComponent(t reflect.Type) IComponent {
 		}
 	}
 	return nil
+}
+
+func (e *Entity) AddChild(entities... *Entity) {
+	for _, entity := range entities {
+		e.Children = append(e.Children, entity)
+	}
+}
+
+func (e *Entity) GetChildren() []*Entity {
+	return e.Children
+}
+
+// enable or disable an entity.
+// this will enable or disable all the children
+func (e *Entity) SetActive(active bool){
+	e.Active = active
+	for _, child := range e.Children{
+		child.SetActive(active)
+	}
 }

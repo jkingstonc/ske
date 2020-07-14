@@ -6,50 +6,6 @@ import (
 	"path/filepath"
 )
 
-const (
-	TEXTURE   = 0x0
-	AUDIO   = 0x1
-	TILEMAP = 0x2
-)
-
-type Resource interface {
-	Type() uint8
-}
-
-// image resource
-type Texture struct {
-	// sdl image here
-}
-
-func (*Texture) Type() uint8{
-	return TEXTURE
-}
-
-
-// image resource
-type Audio struct {
-}
-
-func (*Audio) Type() uint8{
-	return AUDIO
-}
-
-// tile resource (used in tile-maps)
-type Tile struct {
-	Pos     Vec
-	Texture Texture
-}
-
-// tile-map resource
-type TileMap struct {
-	Tiles [][]Tile
-}
-
-func (*TileMap) Type() uint8{
-	return TILEMAP
-}
-
-
 type FileManager struct {
 	LoadedFiles map[string]Resource
 }

@@ -7,32 +7,57 @@ type Scene interface {
 	OnLoad()
 }
 
+// represents the runtime for a scene (a scene needs an ECS)
+type SceneRuntime struct {
+	Scene Scene
+	ECS   *EntityManager
+	// true if we previously exited this scene, and wanted to save the state
+	Saved bool
+}
+
 type SceneManager struct {
-	registered []Scene
-	active     Scene
+	registered []*SceneRuntime
+	active     *SceneRuntime
+}
+
+func (s *SceneManager) Update(){
+	s.active.ECS.Update()
 }
 
 // switch to another scene
-func (s *SceneManager) Register(scene Scene){
-	s.registered = append(s.registered, scene)
-	if s.active == nil{
-		s.active = scene
+func (s *SceneManager) Register(scenes... Scene){
+	for _, scene := range scenes {
+		runtime := &SceneRuntime{
+			Scene: scene,
+			ECS:   &EntityManager{},
+		}
+		s.registered = append(s.registered, runtime)
+		if s.active == nil {
+			s.active = runtime
+		}
+		// call setup on each scene that is registered
+		scene.Setup()
 	}
-	// call setup on each scene that is registered
-	scene.Setup()
 }
 
 // switch to another scene
 func (s *SceneManager) ToScene(tag string, save bool){
-	// clear the ECS
-	ECS.Entities = nil
+	// if we don't want to save the scene, then we clear the entities
+	if !save{
+		s.active.ECS.Entities = nil
+	}
 	found := false
 	// then set the new scene
-	for _, scene := range s.registered{
-		if scene.Tag() == tag{
-			s.active = scene
-			// then call OnLoad on the scene
-			scene.OnLoad()
+	for _, sceneRuntime := range s.registered{
+		if sceneRuntime.Scene.Tag() == tag{
+			// set the active scene to the requested scene
+			s.active = sceneRuntime
+			// set the ECS to the scene's runtime EntityManager
+			ECS = sceneRuntime.ECS
+			// then call OnLoad on the scene if the scene wasn't saved
+			if !sceneRuntime.Saved {
+				sceneRuntime.Scene.OnLoad()
+			}
 			found = true
 		}
 	}
@@ -41,5 +66,5 @@ func (s *SceneManager) ToScene(tag string, save bool){
 
 // go to the first scene (called when the engine runs)
 func (s *SceneManager) ToFirstScene(){
-	s.ToScene(s.active.Tag(), false)
+	s.ToScene(s.active.Scene.Tag(), false)
 }
