@@ -1,12 +1,14 @@
 package ske
 
 var (
+	Engine *Ske
 	Events *EventManager
 	Inputs *InputManager
 	// TODO link scenes with ECS correctly0
 	ECS    *EntityManager
 	Scenes *SceneManager
     Loader *FileManager
+	Screen *SDLScreen
 )
 
 const (
@@ -22,9 +24,18 @@ type Ske struct {
 }
 
 type SkeOptions struct {
-	Title  string
-	Width  int
-	Height int
+	Title     string
+	Width     int32
+	Height    int32
+	Resizable bool
+}
+
+func (s*Ske) ForceStop(){
+	s.running = false
+}
+
+func (s*Ske) Options() *SkeOptions{
+	return s.options
 }
 
 func NewSKE(options *SkeOptions) *Ske {
@@ -35,24 +46,34 @@ func NewSKE(options *SkeOptions) *Ske {
 		options: options,
 	}
 
+
+	Screen = &SDLScreen{}
+
 	Scenes = &SceneManager{}
-
 	Events = &EventManager{Listeners: make(map[string][]func(event Event))}
-
+	Inputs = &InputManager{}
 	Loader = &FileManager{LoadedFiles: make(map[string]Resource)}
 
+	Engine = ske
 	return ske
 }
 
-func (Ske *Ske) Run(){
-
+func (ske *Ske) Run(){
+	// setup the screen
+	Screen.Setup()
 	// go to the first scene
 	Scenes.ToFirstScene()
 
-	Ske.running = true
+	ske.running = true
 	// this is the main game loop
-	for Ske.running{
+	for ske.running{
+		Inputs.Update()
+		Screen.PollEvents()
+		Screen.RendererPrepare()
 		Scenes.Update()
+		Screen.RendererFlush()
 	}
-	Ske.running = false
+	ske.running = false
+	// close the screen
+	Screen.Close()
 }
