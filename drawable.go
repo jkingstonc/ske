@@ -20,18 +20,23 @@ func (*Texture) Type() uint8{
 }
 
 func (t*Texture) Draw(position *sdl.Rect){
-	t.
+	Screen.Renderer.CopyEx(t.Data, nil, position, 0, nil, sdl.FLIP_NONE)
 }
 
-// sprite resource (essentially an animated texture)
+// sprite resource
 type Sprite struct {
 	Animation Animation
 	// scale relative to the pixel size
 	Scale     Vec
+	Rot		  float64
 }
 
 func (*Sprite) Type() uint8{
 	return SPRITE
+}
+
+func (s*Sprite) Draw(position *sdl.Rect){
+	Screen.Renderer.CopyEx(s.Animation.Textures[s.Animation.Index].Data, nil, position, s.Rot, nil, sdl.FLIP_NONE)
 }
 
 // an atlas is simply a texture, that we can pick out other textures from

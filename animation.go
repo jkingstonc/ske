@@ -11,6 +11,8 @@ type Animation struct {
 	Speed    float64
 	// whether the animation should loop
 	Looping  bool
+	// the active animation index
+	Index    int
 }
 
 type AnimationComponent struct {
