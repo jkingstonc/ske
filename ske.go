@@ -16,12 +16,6 @@ var (
 	previousTime time.Time
 )
 
-const (
-	// where assets should be loaded from
-	AssetsRoot = "F:\\OneDrive\\Programming\\GO\\src\\ske\\examples\\assets\\"
-)
-
-
 // this is the main driver struct, it will be used to drive the entire engine
 type Ske struct {
 	running   bool
@@ -29,10 +23,11 @@ type Ske struct {
 }
 
 type SkeOptions struct {
-	Title     string
-	Width     int32
-	Height    int32
-	Resizable bool
+	Title      string
+	Width      int32
+	Height     int32
+	Resizable  bool
+	AssetsRoot string
 }
 
 func (s*Ske) ForceStop(){

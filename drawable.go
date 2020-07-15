@@ -90,11 +90,13 @@ func (a*Atlas) splice(w, h int){
 	cellWidth := int(a.Texture.TextureSize.X)/w
 	cellHeight := int(a.Texture.TextureSize.Y)/h
 
+	Log(cellWidth, cellHeight)
+
 	// setup the positional data
-	for y:=0;y<w;y++{
-		for x:=0;x<h;x++{
+	for y:=0;y<h;y++{
+		for x:=0;x<w;x++{
 			a.Positions = append(a.Positions, sdl.Rect{
-				X: int32(x*cellHeight),
+				X: int32(x*cellWidth),
 				Y: int32(y*cellHeight),
 				W: int32(cellWidth),
 				H: int32(cellHeight),
@@ -109,8 +111,6 @@ func (*Atlas) Type() uint8 {
 
 // draw the correct texture in the atlas
 func (a*Atlas) Draw(position *sdl.Rect){
-	// we need to adjust the position here
-	// src: &a.Positions[int(a.Position.X + a.Position.Y*a.GridSize.Y)]
 	Screen.Renderer.Copy(a.Texture.Data, &a.Positions[int(a.Position.X + a.Position.Y*a.GridSize.Y)], position)
 }
 

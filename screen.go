@@ -304,7 +304,7 @@ func (s *SDLScreen) FetchMeshComponents(){
 
 				// the projected points
 				// we need to flip the y as the world y is inverted to the screen y
-				v1, v2 := s.project(t.Pos, m.Drawable.Size())
+				v1, v2 := s.project(V3(t.Pos.X, t.Pos.Y*-1, t.Pos.Z), m.Drawable.Size())
 				// the projected rect
 				position := &sdl.Rect{int32(v1.X), int32(v1.Y), int32(v2.X - v1.X), int32(v2.Y - v1.Y)}
 				m.Drawable.Draw(position)

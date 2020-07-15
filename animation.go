@@ -56,6 +56,11 @@ func (a*AnimationComponent) OnLoad() {
 	a.Mesh.Drawable = a.Active.Atlas
 	a.previousTime = time.Now()
 }
+
+func (a*AnimationComponent) ToAnim(tag string){
+	a.Active = a.Animations[tag]
+}
+
 func (a*AnimationComponent) Update() {
 	// we need to get the texture from the animation
 	// set the atlas position to the correct index
