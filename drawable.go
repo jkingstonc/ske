@@ -109,6 +109,8 @@ func (*Atlas) Type() uint8 {
 
 // draw the correct texture in the atlas
 func (a*Atlas) Draw(position *sdl.Rect){
+	// we need to adjust the position here
+	// src: &a.Positions[int(a.Position.X + a.Position.Y*a.GridSize.Y)]
 	Screen.Renderer.Copy(a.Texture.Data, &a.Positions[int(a.Position.X + a.Position.Y*a.GridSize.Y)], position)
 }
 

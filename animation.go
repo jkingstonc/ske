@@ -5,7 +5,8 @@ import (
 	"time"
 )
 
-// TODO animations
+// TODO why does the animation spawn in the middle of the screen rather than the top left?
+
 // an animation has a series of textures
 type Animation struct {
 	Tag      string

@@ -20,11 +20,6 @@ type SDLScreen struct {
 	ZBuf     ZBuffer
 }
 
-var (
-	Width    int32 = 800
-	Height   int32 = 600
-)
-
 const (
 	UNIT_SIZE float64 = 1
 
@@ -78,14 +73,16 @@ func (s*SDLScreen) WorldToScreen(v Vec) Vec {
 	// zoom with camera
 	pos1 = pos1.Div(s.Cam.Pos.Z)
 	// finally center on screen
-	pos1 = pos1.Add(V2(float64(Width/2), float64(Height/2)))
+	width, height := s.Window.GetSize()
+	pos1 = pos1.Add(V2(float64(width/2), float64(height/2)))
 	return pos1
 }
 
 func (s*SDLScreen) ScreenToWorld(v Vec) Vec {
 	pos1 := v
 	// uncenter from screen
-	pos1 = pos1.Sub(V2(float64(Width/2), float64(Height/2)))
+	width, height := s.Window.GetSize()
+	pos1 = pos1.Sub(V2(float64(width/2), float64(height/2)))
 	if s.Cam.Pos.Z != 0 {
 		// unzoom from camera
 		pos1 = pos1.Mul(s.Cam.Pos.Z)
@@ -95,8 +92,11 @@ func (s*SDLScreen) ScreenToWorld(v Vec) Vec {
 	return pos1
 }
 
-// get a world-to-screen projection (2 coordinates) from a world position and a scale
+// get a world-to-screen projection (2 coordinates) from a world position and a size
 func (s*SDLScreen) project(v, size Vec) (Vec, Vec) {
+	// TODO this may have broken other functions
+	// center the position relative to the screen
+	v = v.Add(size.Div(2))
 	// first take the position
 	pos1 := v.Add(s.Cam.Pos)
 	// then place it in world space
@@ -110,8 +110,9 @@ func (s*SDLScreen) project(v, size Vec) (Vec, Vec) {
 	pos1 = pos1.Div(s.Cam.Pos.Z)
 	pos2 = pos2.Div(s.Cam.Pos.Z)
 	// finally center on screen
-	pos1 = pos1.Add(V2(float64(Width/2), float64(Height/2)))
-	pos2 = pos2.Add(V2(float64(Width/2), float64(Height/2)))
+	width, height := s.Window.GetSize()
+	pos1 = pos1.Add(V2(float64(width/2), float64(height/2)))
+	pos2 = pos2.Add(V2(float64(width/2), float64(height/2)))
 	return pos1, pos2
 }
 
@@ -230,8 +231,7 @@ func (s *SDLScreen) PollEvents() {
 		case *sdl.WindowEvent:
 			if t.Event == sdl.WINDOWEVENT_RESIZED {
 				if Engine.Options().Resizable {
-					Width, Height = s.Window.GetSize()
-					s.Window.SetSize(Width, Height)
+					s.Window.SetSize(t.Data1, t.Data2)
 				}
 			}
 		case *sdl.QuitEvent:
