@@ -1,6 +1,9 @@
 package ske
 
-import "reflect"
+import (
+	"reflect"
+	"time"
+)
 
 // TODO animations
 // an animation has a series of textures
@@ -37,6 +40,7 @@ type AnimationComponent struct {
 	Active   *Animation
 	// the mesh we are updating
 	Mesh      *MeshComponent
+	previousTime time.Time
 }
 
 func (a*AnimationComponent) AddAnimations(animations... *Animation){
@@ -48,19 +52,27 @@ func (a*AnimationComponent) AddAnimations(animations... *Animation){
 
 func (a*AnimationComponent) OnLoad() {
 	a.Mesh = a.Entity.GetComponent(reflect.TypeOf(&MeshComponent{})).(*MeshComponent)
+	a.Mesh.Drawable = a.Active.Atlas
+	a.previousTime = time.Now()
 }
 func (a*AnimationComponent) Update() {
 	// we need to get the texture from the animation
 	// set the atlas position to the correct index
 	a.Active.Atlas.SetAtlasPosition(a.Active.Frames[a.Active.Index])
 
-	// loop to the next animation
-	if a.Active.Index<len(a.Active.Frames)-1 {
+	// if its time to advance
+	if time.Since(a.previousTime).Seconds() > a.Active.Speed {
+		a.previousTime = time.Now()
+		// advance
 		a.Active.Index++
-	} else {
-		// we have finished the animtion
-		if a.Active.Looping {
-			a.Active.Index = 0
+
+		// if we have finished
+		if a.Active.Index >= len(a.Active.Frames){
+			if a.Active.Looping{
+				a.Active.Index = 0
+			}else{
+				a.Active.Index = len(a.Active.Frames)-1
+			}
 		}
 	}
 }
