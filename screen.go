@@ -300,10 +300,15 @@ func (s *SDLScreen) FetchMeshComponents(){
 				t := transform.(*TransformComponent)
 				m := mesh.(*MeshComponent)
 
-				// get the drawable from the mesh
-				// TODO for now we assume its a texture
-				texture := m.Drawable.(*Texture)
-				s.DrawTextureWorld(t.Pos.Sub(texture.Size.Div(2)), t.Pos.Add(texture.Size.Div(2)), texture.Data, 0)
+				// TODO for some reason the points aren't being calculated correctly
+
+				// the projected points
+				// we need to flip the y as the world y is inverted to the screen y
+				v1, v2 := s.project(t.Pos, m.Drawable.Size())
+				// the projected rect
+				position := &sdl.Rect{int32(v1.X), int32(v1.Y), int32(v2.X - v1.X), int32(v2.Y - v1.Y)}
+				m.Drawable.Draw(position)
+				//s.DrawTextureWorld(t.Pos.Sub(texture.Size.Div(2)), t.Pos.Add(texture.Size.Div(2)), texture.Data, 0)
 			}
 		}
 	}
@@ -311,33 +316,33 @@ func (s *SDLScreen) FetchMeshComponents(){
 
 // method to actually draw to the screen. called once per frame
 func (s *SDLScreen) RendererFlush() {
-	var previousColour Vec
-	// iterate over each layer and the BufferedData in that layer
-	for _, layer := range s.ZBuf.Layers {
-		for _, BufferedData := range layer.BufferedDatas {
-			// set the colour
-			if !BufferedData.Colour.Equals(previousColour) {
-				previousColour = BufferedData.Colour
-			}
-			s.Renderer.SetDrawColor(uint8(previousColour.X), uint8(previousColour.Y), uint8(previousColour.Z), uint8(previousColour.W))
-			// actually call SDL draw function
-			switch BufferedData.Type {
-			case D_RECT:
-				if BufferedData.Flags&NOFILL > 0 {
-					s.Renderer.DrawRect(&sdl.Rect{int32(BufferedData.V1.X), int32(BufferedData.V1.Y), int32(BufferedData.V2.X - BufferedData.V1.X), int32(BufferedData.V2.Y - BufferedData.V1.Y)})
-				} else {
-					s.Renderer.FillRect(&sdl.Rect{int32(BufferedData.V1.X), int32(BufferedData.V1.Y), int32(BufferedData.V2.X - BufferedData.V1.X), int32(BufferedData.V2.Y - BufferedData.V1.Y)})
-				}
-				break
-			case D_LINE:
-				s.Renderer.DrawLine(int32(BufferedData.V1.X), int32(BufferedData.V1.Y), int32(BufferedData.V2.X), int32(BufferedData.V2.Y))
-				break
-			case D_TEXTURE:
-				s.Renderer.CopyEx(BufferedData.Data.(*sdl.Texture), nil, &sdl.Rect{int32(BufferedData.V1.X), int32(BufferedData.V1.Y), int32(BufferedData.V2.X - BufferedData.V1.X), int32(BufferedData.V2.Y - BufferedData.V1.Y)}, BufferedData.Angle, nil, sdl.FLIP_NONE)
-				break
-			}
-		}
-	}
+	//var previousColour Vec
+	//// iterate over each layer and the BufferedData in that layer
+	//for _, layer := range s.ZBuf.Layers {
+	//	for _, BufferedData := range layer.BufferedDatas {
+	//		// set the colour
+	//		if !BufferedData.Colour.Equals(previousColour) {
+	//			previousColour = BufferedData.Colour
+	//		}
+	//		s.Renderer.SetDrawColor(uint8(previousColour.X), uint8(previousColour.Y), uint8(previousColour.Z), uint8(previousColour.W))
+	//		// actually call SDL draw function
+	//		switch BufferedData.Type {
+	//		case D_RECT:
+	//			if BufferedData.Flags&NOFILL > 0 {
+	//				s.Renderer.DrawRect(&sdl.Rect{int32(BufferedData.V1.X), int32(BufferedData.V1.Y), int32(BufferedData.V2.X - BufferedData.V1.X), int32(BufferedData.V2.Y - BufferedData.V1.Y)})
+	//			} else {
+	//				s.Renderer.FillRect(&sdl.Rect{int32(BufferedData.V1.X), int32(BufferedData.V1.Y), int32(BufferedData.V2.X - BufferedData.V1.X), int32(BufferedData.V2.Y - BufferedData.V1.Y)})
+	//			}
+	//			break
+	//		case D_LINE:
+	//			s.Renderer.DrawLine(int32(BufferedData.V1.X), int32(BufferedData.V1.Y), int32(BufferedData.V2.X), int32(BufferedData.V2.Y))
+	//			break
+	//		case D_TEXTURE:
+	//			s.Renderer.CopyEx(BufferedData.Data.(*sdl.Texture), nil, &sdl.Rect{int32(BufferedData.V1.X), int32(BufferedData.V1.Y), int32(BufferedData.V2.X - BufferedData.V1.X), int32(BufferedData.V2.Y - BufferedData.V1.Y)}, BufferedData.Angle, nil, sdl.FLIP_NONE)
+	//			break
+	//		}
+	//	}
+	//}
 	// clear the z-buffer and draw to the screen
 	s.ZBuf.Layers = nil
 	s.Renderer.Present()
@@ -388,6 +393,6 @@ func (s *SDLScreen) LoadTexture(path string) *Texture {
 	surfaceImg.Free()
 	return &Texture{
 		Data: texture,
-		Size: V2(float64(width), float64(height)),
+		TextureSize: V2(float64(width), float64(height)),
 	}
 }
