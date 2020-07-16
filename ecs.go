@@ -9,7 +9,7 @@ import (
 // note this is not an ECS, it is an EC. the entity logic is
 // wrapped inside the components.
 type EntityManager struct {
-	// store the array of Entities
+	// store the array of active Entities
 	Entities []*Entity
 }
 
@@ -26,6 +26,15 @@ func Deserialize(path string) *Entity{
 	Log(err)
 	Assert(err==nil, "couldn't unmarshal entity JSON")
 	return entity
+}
+
+func (entityManager *EntityManager) EntityWithTag(tag string) *Entity{
+	for _, entity := range entityManager.Entities{
+		if entity.Tag == tag{
+			return entity
+		}
+	}
+	return nil
 }
 
 // instantiate a prefab

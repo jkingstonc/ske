@@ -19,7 +19,7 @@ func BasicCamera() *Entity{
 		Component: cam.NewComponent(),
 	}, &TransformComponent{
 		Component: cam.NewComponent(),
-		Pos:   V2(1,1),
+		Pos:   V3(0,0,5),
 		Scale: V2(1,1),
 	})
 	return cam

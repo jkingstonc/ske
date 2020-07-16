@@ -90,8 +90,6 @@ func (a*Atlas) splice(w, h int){
 	cellWidth := int(a.Texture.TextureSize.X)/w
 	cellHeight := int(a.Texture.TextureSize.Y)/h
 
-	Log(cellWidth, cellHeight)
-
 	// setup the positional data
 	for y:=0;y<h;y++{
 		for x:=0;x<w;x++{

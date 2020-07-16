@@ -78,5 +78,5 @@ func (i InputManager) Button(button string) InputNode{
 
 func (i InputNode) Pressed() bool{return i.pressed}
 func (i InputNode) Released() bool{return i.released}
-func (i InputNode) Held() bool{return i.held}
+func (i InputNode) Held() bool{return i.held || i.pressed}
 func (i InputNode) Scrolled() float64{return i.scrolled}

@@ -21,7 +21,7 @@ type SDLScreen struct {
 }
 
 const (
-	UNIT_SIZE float64 = 1
+	UNIT_SIZE float64 = 500
 
 	NOFILL = 0x1 << 0
 	FILL   = 0x1 << 1
@@ -93,27 +93,33 @@ func (s*SDLScreen) ScreenToWorld(v Vec) Vec {
 }
 
 // get a world-to-screen projection (2 coordinates) from a world position and a size
-func (s*SDLScreen) project(v, size Vec) (Vec, Vec) {
-	// TODO this may have broken other functions
-	// center the position relative to the screen
-	v = v.Add(size.Div(2))
-	// first take the position
-	pos1 := v.Add(s.Cam.Pos)
-	// then place it in world space
-	pos1 = pos1.Mul(UNIT_SIZE)
-	// get the corner positions using the unit size
-	// top left corner
-	pos1 = pos1.Sub(size.Mul(UNIT_SIZE))
-	// bottom right corner
-	pos2 := pos1.Add(size.Mul(UNIT_SIZE))
-	// zoom with the camera
-	pos1 = pos1.Div(s.Cam.Pos.Z)
-	pos2 = pos2.Div(s.Cam.Pos.Z)
-	// finally center on screen
-	width, height := s.Window.GetSize()
-	pos1 = pos1.Add(V2(float64(width/2), float64(height/2)))
-	pos2 = pos2.Add(V2(float64(width/2), float64(height/2)))
-	return pos1, pos2
+func (s*SDLScreen) project(v, size Vec, target uint8) (Vec, Vec) {
+	if target == WORLD_TARGET {
+		// TODO this may have broken other functions
+		// center the position relative to the screen
+		v = v.Add(size.Div(2))
+		// first take the position
+		pos1 := v.Add(s.Cam.Pos)
+		// then place it in world space
+		pos1 = pos1.Mul(UNIT_SIZE)
+		// get the corner positions using the unit size
+		// top left corner
+		pos1 = pos1.Sub(size.Mul(UNIT_SIZE))
+		// bottom right corner
+		pos2 := pos1.Add(size.Mul(UNIT_SIZE))
+		// zoom with the camera
+		pos1 = pos1.Div(s.Cam.Pos.Z)
+		pos2 = pos2.Div(s.Cam.Pos.Z)
+		// finally center on screen
+		width, height := s.Window.GetSize()
+		pos1 = pos1.Add(V2(float64(width/2), float64(height/2)))
+		pos2 = pos2.Add(V2(float64(width/2), float64(height/2)))
+		return pos1, pos2
+	}else if target == SCREEN_TARGET{
+		return v, v.Add(size)
+	}
+	Assert(false, "must have a valid projection target")
+	return Vec{}, Vec{}
 }
 
 // draw a single instance of a BufferedData
@@ -133,82 +139,82 @@ func (s *SDLScreen) DrawRectScreen(v1, v2 Vec, col Vec, flags uint8) {
 	s.ZBuf.Layers[int(v1.Z)].BufferedDatas = append(s.ZBuf.Layers[int(v1.Z)].BufferedDatas, BufferedData)
 }
 
-func (s *SDLScreen) DrawRectWorld(v1, size, col Vec, flags uint8) {
-	pos1, pos2 := s.project(v1, size)
-	BufferedData := BufferedData{
-		Type:   D_RECT,
-		Colour: col,
-		Flags:  flags,
-		V1:     pos1,
-		V2:     pos2,
-	}
-	// add more layers until we get the desired z-depth
-	s.matchLayers(int(v1.Z))
-	// add the BufferedData to the layer
-	s.ZBuf.Layers[int(v1.Z)].BufferedDatas = append(s.ZBuf.Layers[int(v1.Z)].BufferedDatas, BufferedData)
-}
-
+//func (s *SDLScreen) DrawRectWorld(v1, size, col Vec, flags uint8) {
+//	pos1, pos2 := s.project(v1, size)
+//	BufferedData := BufferedData{
+//		Type:   D_RECT,
+//		Colour: col,
+//		Flags:  flags,
+//		V1:     pos1,
+//		V2:     pos2,
+//	}
+//	// add more layers until we get the desired z-depth
+//	s.matchLayers(int(v1.Z))
+//	// add the BufferedData to the layer
+//	s.ZBuf.Layers[int(v1.Z)].BufferedDatas = append(s.ZBuf.Layers[int(v1.Z)].BufferedDatas, BufferedData)
+//}
+//
 // draw a single instance of a BufferedData
-// NOTE the drawing convention is that pos stores the coordinates, NOT the x & y and w & h
-func (s *SDLScreen) DrawTextureScreen(v1, v2 Vec, texture *sdl.Texture, angle float64) {
-	BufferedData := BufferedData{
-		Type:  D_TEXTURE,
-		Data:  texture,
-		V1:    v1,
-		V2:    v2,
-		Angle: angle,
-	}
-	// add more layers until we get the desired z-depth
-	s.matchLayers(int(v1.Z))
-	// add the BufferedData to the layer
-	s.ZBuf.Layers[int(v1.Z)].BufferedDatas = append(s.ZBuf.Layers[int(v1.Z)].BufferedDatas, BufferedData)
-}
-
-func (s *SDLScreen) DrawTextureWorld(v1, size Vec, texture *sdl.Texture, angle float64) {
-	// get the world projection
-	pos1, pos2 := s.project(v1, size)
-	BufferedData := BufferedData{
-		Type:  D_TEXTURE,
-		Data:  texture,
-		V1:    pos1,
-		V2:    pos2,
-		Angle: angle,
-	}
-	// add more layers until we get the desired z-depth
-	s.matchLayers(int(v1.Z))
-	// add the BufferedData to the layer
-	s.ZBuf.Layers[int(v1.Z)].BufferedDatas = append(s.ZBuf.Layers[int(v1.Z)].BufferedDatas, BufferedData)
-}
-
-// draw a line between points v1 and v2 with a colour
-func (s *SDLScreen) DrawLineScreen(v1, v2 Vec, col Vec) {
-	BufferedData := BufferedData{
-		Type:   D_LINE,
-		Colour: col,
-		V1:     v1,
-		V2:     v2,
-	}
-	// add more layers until we get the desired z-depth
-	s.matchLayers(int(v1.Z))
-	// add the BufferedData to the layer
-	s.ZBuf.Layers[int(v1.Z)].BufferedDatas = append(s.ZBuf.Layers[int(v1.Z)].BufferedDatas, BufferedData)
-}
-
-// draw a line between points v1 and v2 with a colour
-func (s *SDLScreen) DrawLineWorld(v1, v2 Vec, col Vec) {
-	pos1 := s.WorldToScreen(v1)
-	pos2 := s.WorldToScreen(v2)
-	BufferedData := BufferedData{
-		Type:   D_LINE,
-		Colour: col,
-		V1:     pos1,
-		V2:     pos2,
-	}
-	// add more layers until we get the desired z-depth
-	s.matchLayers(int(v1.Z))
-	// add the BufferedData to the layer
-	s.ZBuf.Layers[int(v1.Z)].BufferedDatas = append(s.ZBuf.Layers[int(v1.Z)].BufferedDatas, BufferedData)
-}
+//// NOTE the drawing convention is that pos stores the coordinates, NOT the x & y and w & h
+//func (s *SDLScreen) DrawTextureScreen(v1, v2 Vec, texture *sdl.Texture, angle float64) {
+//	BufferedData := BufferedData{
+//		Type:  D_TEXTURE,
+//		Data:  texture,
+//		V1:    v1,
+//		V2:    v2,
+//		Angle: angle,
+//	}
+//	// add more layers until we get the desired z-depth
+//	s.matchLayers(int(v1.Z))
+//	// add the BufferedData to the layer
+//	s.ZBuf.Layers[int(v1.Z)].BufferedDatas = append(s.ZBuf.Layers[int(v1.Z)].BufferedDatas, BufferedData)
+//}
+//
+//func (s *SDLScreen) DrawTextureWorld(v1, size Vec, texture *sdl.Texture, angle float64) {
+//	// get the world projection
+//	pos1, pos2 := s.project(v1, size)
+//	BufferedData := BufferedData{
+//		Type:  D_TEXTURE,
+//		Data:  texture,
+//		V1:    pos1,
+//		V2:    pos2,
+//		Angle: angle,
+//	}
+//	// add more layers until we get the desired z-depth
+//	s.matchLayers(int(v1.Z))
+//	// add the BufferedData to the layer
+//	s.ZBuf.Layers[int(v1.Z)].BufferedDatas = append(s.ZBuf.Layers[int(v1.Z)].BufferedDatas, BufferedData)
+//}
+//
+//// draw a line between points v1 and v2 with a colour
+//func (s *SDLScreen) DrawLineScreen(v1, v2 Vec, col Vec) {
+//	BufferedData := BufferedData{
+//		Type:   D_LINE,
+//		Colour: col,
+//		V1:     v1,
+//		V2:     v2,
+//	}
+//	// add more layers until we get the desired z-depth
+//	s.matchLayers(int(v1.Z))
+//	// add the BufferedData to the layer
+//	s.ZBuf.Layers[int(v1.Z)].BufferedDatas = append(s.ZBuf.Layers[int(v1.Z)].BufferedDatas, BufferedData)
+//}
+//
+//// draw a line between points v1 and v2 with a colour
+//func (s *SDLScreen) DrawLineWorld(v1, v2 Vec, col Vec) {
+//	pos1 := s.WorldToScreen(v1)
+//	pos2 := s.WorldToScreen(v2)
+//	BufferedData := BufferedData{
+//		Type:   D_LINE,
+//		Colour: col,
+//		V1:     pos1,
+//		V2:     pos2,
+//	}
+//	// add more layers until we get the desired z-depth
+//	s.matchLayers(int(v1.Z))
+//	// add the BufferedData to the layer
+//	s.ZBuf.Layers[int(v1.Z)].BufferedDatas = append(s.ZBuf.Layers[int(v1.Z)].BufferedDatas, BufferedData)
+//}
 
 // Get the mouse position in the screen
 func (s*SDLScreen) MousePosScreen() Vec {
@@ -238,14 +244,13 @@ func (s *SDLScreen) PollEvents() {
 			// running = false
 			Engine.ForceStop()
 		case *sdl.KeyboardEvent:
+			if t.Type == sdl.KEYDOWN {
+				Inputs.SetActive(SDLKeyToString(t.Keysym.Sym), PRESSED, 0)
+			} else if t.Type == sdl.KEYUP {
+				Inputs.SetActive(SDLKeyToString(t.Keysym.Sym), RELEASED, 0)
+			}
 			if t.Repeat == 1 {
 				Inputs.SetActive(SDLKeyToString(t.Keysym.Sym), HELD, 0)
-			} else {
-				if t.Type == sdl.KEYDOWN {
-					Inputs.SetActive(SDLKeyToString(t.Keysym.Sym), PRESSED, 0)
-				} else if t.Type == sdl.KEYUP {
-					Inputs.SetActive(SDLKeyToString(t.Keysym.Sym), RELEASED, 0)
-				}
 			}
 		case *sdl.MouseButtonEvent:
 			if t.Type == sdl.MOUSEBUTTONDOWN {
@@ -304,7 +309,9 @@ func (s *SDLScreen) FetchMeshComponents(){
 
 				// the projected points
 				// we need to flip the y as the world y is inverted to the screen y
-				v1, v2 := s.project(V3(t.Pos.X, t.Pos.Y*-1, t.Pos.Z), m.Drawable.Size())
+				var v1, v2 Vec
+				//v1, v2 = s.project(V3(t.Pos.X, t.Pos.Y*-1, t.Pos.Z), m.Drawable.Size(), m.Target)
+				v1, v2 = s.project(V3(t.Pos.X, t.Pos.Y*-1, t.Pos.Z), t.Scale, m.Target)
 				// the projected rect
 				position := &sdl.Rect{int32(v1.X), int32(v1.Y), int32(v2.X - v1.X), int32(v2.Y - v1.Y)}
 				m.Drawable.Draw(position)
