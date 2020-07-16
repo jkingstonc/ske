@@ -311,7 +311,9 @@ func (s *SDLScreen) FetchMeshComponents(){
 				// we need to flip the y as the world y is inverted to the screen y
 				var v1, v2 Vec
 				//v1, v2 = s.project(V3(t.Pos.X, t.Pos.Y*-1, t.Pos.Z), m.Drawable.Size(), m.Target)
-				v1, v2 = s.project(V3(t.Pos.X, t.Pos.Y*-1, t.Pos.Z), t.Scale, m.Target)
+
+				// the scale of the projected texture is determined by the transform scale, and the original texture size
+				v1, v2 = s.project(V3(t.Pos.X, t.Pos.Y*-1, t.Pos.Z), t.Scale.Mul(m.Drawable.Size()), m.Target)
 				// the projected rect
 				position := &sdl.Rect{int32(v1.X), int32(v1.Y), int32(v2.X - v1.X), int32(v2.Y - v1.Y)}
 				m.Drawable.Draw(position)
