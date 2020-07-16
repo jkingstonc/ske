@@ -14,6 +14,8 @@ type CollisionEvent struct {
 // add to an entity to trigger collision events
 type BoxColliderComponent struct{
 	Component
+	// the collider boundaries are indipendent of the scale
+	Boundaries Vec
 	// cause solid collisions
 	Solid bool
 }
@@ -31,19 +33,19 @@ func (c*BoxColliderComponent) Update(){
 
 
 			if otherC!=nil && otherT!=nil {
-				//otherC := otherC.(*BoxColliderComponent)
+				otherC := otherC.(*BoxColliderComponent)
 				otherT := otherT.(*TransformComponent)
 
 				// the transform scale is the diamater!
-				ourLeft := t.Pos.X - t.Scale.X/2
-				ourRight := t.Pos.X + t.Scale.X/2
-				ourTop := t.Pos.Y + t.Scale.Y/2
-				ourBottom := t.Pos.Y - t.Scale.Y/2
+				ourLeft := t.Pos.X - c.Boundaries.X/2
+				ourRight := t.Pos.X + c.Boundaries.X/2
+				ourTop := t.Pos.Y + c.Boundaries.Y/2
+				ourBottom := t.Pos.Y - c.Boundaries.Y/2
 
-				theirLeft := otherT.Pos.X - otherT.Scale.X/2
-				theirRight := otherT.Pos.X + otherT.Scale.X/2
-				theirTop := otherT.Pos.Y + otherT.Scale.Y/2
-				theirBottom := otherT.Pos.Y - otherT.Scale.Y/2
+				theirLeft := otherT.Pos.X - otherC.Boundaries.X/2
+				theirRight := otherT.Pos.X + otherC.Boundaries.X/2
+				theirTop := otherT.Pos.Y + otherC.Boundaries.Y/2
+				theirBottom := otherT.Pos.Y - otherC.Boundaries.Y/2
 
 				if colliding(ourLeft, ourRight, ourTop, ourBottom, theirLeft, theirRight, theirTop, theirBottom) {
 					// trigger a collision event
