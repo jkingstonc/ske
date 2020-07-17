@@ -2,6 +2,7 @@ package ske
 
 import (
 	"github.com/veandco/go-sdl2/img"
+	"github.com/veandco/go-sdl2/mix"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 )
@@ -21,7 +22,8 @@ type SDLScreen struct {
 }
 
 const (
-	UNIT_SIZE float64 = 500
+	UNIT_SIZE float64 = 1
+	WORLD_UNIT_SIZE float64 = 500
 
 	NOFILL = 0x1 << 0
 	FILL   = 0x1 << 1
@@ -101,12 +103,12 @@ func (s*SDLScreen) project(v, size Vec, target uint8) (Vec, Vec) {
 		// first take the position
 		pos1 := v.Add(s.Cam.Pos)
 		// then place it in world space
-		pos1 = pos1.Mul(UNIT_SIZE)
+		pos1 = pos1.Mul(WORLD_UNIT_SIZE)
 		// get the corner positions using the unit size
 		// top left corner
-		pos1 = pos1.Sub(size.Mul(UNIT_SIZE))
+		pos1 = pos1.Sub(size.Mul(WORLD_UNIT_SIZE))
 		// bottom right corner
-		pos2 := pos1.Add(size.Mul(UNIT_SIZE))
+		pos2 := pos1.Add(size.Mul(WORLD_UNIT_SIZE))
 		// zoom with the camera
 		pos1 = pos1.Div(s.Cam.Pos.Z)
 		pos2 = pos2.Div(s.Cam.Pos.Z)
@@ -272,15 +274,8 @@ func (s *SDLScreen) RendererPrepare() {
 }
 
 func (s *SDLScreen) FetchMeshComponents(){
-	// fetch the camera entity
-
-
 	for _, entity := range ECS.Entities{
 		if entity.Active{
-
-
-
-
 			// fetch the transform and the mesh of the entity
 			var transform, mesh, camera IComponent
 			for _, component := range entity.Components{
@@ -293,31 +288,25 @@ func (s *SDLScreen) FetchMeshComponents(){
 					camera = c
 				}
 			}
-
 			//if the entity has a camera component, then update the screen camera
 			if camera != nil && transform != nil{
 				s.Cam.Pos = transform.(*TransformComponent).Pos
 				s.Cam.Rotation = transform.(*TransformComponent).Rot
 			}
-
 			// if the entity has a mesh, and a transform, then draw it
 			if transform != nil && mesh != nil{
 				t := transform.(*TransformComponent)
 				m := mesh.(*MeshComponent)
-
-				// TODO for some reason the points aren't being calculated correctly
-
-				// the projected points
+				Assert(m.Drawable!=nil, "mesh drawable is nil")
 				// we need to flip the y as the world y is inverted to the screen y
 				var v1, v2 Vec
-				//v1, v2 = s.project(V3(t.Pos.X, t.Pos.Y*-1, t.Pos.Z), m.Drawable.Size(), m.Target)
-
-				// the scale of the projected texture is determined by the transform scale, and the original texture size
-				v1, v2 = s.project(V3(t.Pos.X, t.Pos.Y*-1, t.Pos.Z), t.Scale.Mul(m.Drawable.Size()), m.Target)
-				// the projected rect
+				if m.Target==WORLD_TARGET {
+					v1, v2 = s.project(V3(t.Pos.X, t.Pos.Y*-1, t.Pos.Z), t.Scale, m.Target)
+				}else if m.Target == SCREEN_TARGET{
+					v1, v2 = s.project(V3(t.Pos.X, t.Pos.Y*-1, t.Pos.Z), m.Drawable.Size(), m.Target)
+				}
 				position := &sdl.Rect{int32(v1.X), int32(v1.Y), int32(v2.X - v1.X), int32(v2.Y - v1.Y)}
 				m.Drawable.Draw(position)
-				//s.DrawTextureWorld(t.Pos.Sub(texture.Size.Div(2)), t.Pos.Add(texture.Size.Div(2)), texture.Data, 0)
 			}
 		}
 	}
@@ -365,6 +354,11 @@ func (s *SDLScreen) Setup() {
 	// Using the SDL_ttf library so need to initialize it before using it
 	err = ttf.Init()
 	Assert(err==nil, "failed to initialize TTF")
+	// initialise sdl_mixer for audio
+	err = mix.Init(mix.INIT_FLAC | mix.INIT_MOD | mix.INIT_MP3 | mix.INIT_OGG)
+	Assert(err==nil, "failed to initialize mixer")
+	err = mix.OpenAudio(22050, mix.DEFAULT_FORMAT, mix.DEFAULT_CHANNELS, mix.DEFAULT_CHUNKSIZE)
+	Assert(err==nil, "failed to open mixer audio")
 	window, err := sdl.CreateWindow(Engine.Options().Title, sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
 		Engine.Options().Width, Engine.Options().Width, sdl.WINDOW_RESIZABLE)
 	Assert(err==nil, "failed to create graphics")
@@ -385,6 +379,9 @@ func (s *SDLScreen) Setup() {
 func (s *SDLScreen) Close() {
 	s.Renderer.Destroy()
 	s.Window.Destroy()
+	mix.Quit()
+	img.Quit()
+	ttf.Quit()
 	sdl.Quit()
 }
 

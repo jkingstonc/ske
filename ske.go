@@ -64,7 +64,6 @@ func (ske *Ske) Run(scene string){
 	for ske.running{
 		dt := time.Since(previousTime).Seconds()
 		previousTime = time.Now()
-		Log(DT)
 		if dt > 0 {
 			DT = dt
 		}

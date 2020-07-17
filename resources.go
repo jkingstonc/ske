@@ -6,19 +6,12 @@ const (
 	ATLAS   = 0x2
 	AUDIO   = 0x3
 	TILEMAP = 0x4
+	FONT    = 0x5
+	TEXT    = 0x6
 )
 
 type Resource interface {
 	Type() uint8
-}
-
-
-// image resource
-type Audio struct {
-}
-
-func (*Audio) Type() uint8{
-	return AUDIO
 }
 
 // tile resource (used in tile-maps)
@@ -27,9 +20,11 @@ type Tile struct {
 	Texture *Texture
 }
 
-// tile-map resource
+// tile-map resource.
+// a tile-map is essentially an array of tiles, the tilemap is used for easy texture loading.
+// the programmer must then create the entities that go along with the tilemap
 type TileMap struct {
-	Tiles [][]Tile
+	Tiles []*Tile
 }
 
 func (*TileMap) Type() uint8{

@@ -1,6 +1,7 @@
 package ske
 
 import (
+	"github.com/veandco/go-sdl2/mix"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -13,13 +14,23 @@ type FileManager struct {
 // load a file into the game kernel
 func (f*FileManager) Load(paths... string){
 	for _, path := range paths{
+		fullPath := Engine.options.AssetsRoot + path
 		// check what the extension of the file is
-		switch filepath.Ext(filepath.Base(path)){
+		switch filepath.Ext(filepath.Base(path)) {
+		case ".ogg":
+			music, err := mix.LoadMUS(fullPath)
+			Assert(err==nil, "could not load music file in the kernel")
+			f.LoadedFiles[path] = &Audio{Music: music,}
+		case ".ttf":
+			f.LoadedFiles[path] = &FontResource{Font: nil, Path: path}
 		case ".png":
 			fallthrough
 		case ".jpg":
-			texture := Screen.LoadTexture(Engine.options.AssetsRoot +path)
-			f.LoadedFiles[path]=texture}
+			texture := Screen.LoadTexture(fullPath)
+			f.LoadedFiles[path] = texture
+		case ".tmx": // tilemaps
+			break
+		}
 	}
 }
 
