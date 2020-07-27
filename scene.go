@@ -39,9 +39,21 @@ func (s *SceneManager) Register(scenes... Scene){
 
 // switch to another scene
 func (s *SceneManager) ToScene(tag string, save bool){
+
 	// if we don't want to save the scene, then we clear the entities
 	if s.active != nil{
 		s.active.Saved = save
+
+		// go through the ECS, and stop all audio sources
+		for _, entity := range s.active.ECS.Entities{
+			for _, component := range entity.Components{
+				switch c:=component.(type){
+				case *AudioComponent:
+					c.Stop()
+				}
+			}
+		}
+
 		if !save{
 			s.active.ECS.Entities = nil
 		}

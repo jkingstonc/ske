@@ -3,16 +3,16 @@ package ske
 import "time"
 
 var (
-	DT     float64
-	Engine *Ske
-	Events *EventManager
-	Inputs *InputManager
-	// TODO link scenes with ECS correctly0
-	ECS    *EntityManager
-	Scenes *SceneManager
-    Loader *FileManager
-	Screen *SDLScreen
+	Engine 		 *Ske
+	Events 		 *EventManager
+	Inputs 		 *InputManager
+	// TODO link scenes with ECS correctly (perhaps ECS should hotswap scenes?)
+	ECS    		 *EntityManager
+	Scenes 		 *SceneManager
+	Loader 		 *FileManager
+	Screen 	     *SDLScreen
 
+	DT           float64
 	previousTime time.Time
 )
 
@@ -47,11 +47,11 @@ func NewSKE(options *SkeOptions) *Ske {
 
 	Screen = &SDLScreen{}
 	Screen.Setup()
-
 	Scenes = &SceneManager{}
 	Events = &EventManager{Listeners: make(map[string][]func(event Event))}
 	Inputs = &InputManager{}
 	Loader = &FileManager{LoadedFiles: make(map[string]Resource)}
+	Loader.Setup()
 
 	return Engine
 }

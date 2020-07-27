@@ -19,6 +19,12 @@ func (a*Audio) Play(){
 	}
 }
 
+// Stop will stop the current music playing
+// TODO this currently stops all music, we need a way of stopping individual music tracks
+func (a*Audio) Stop(){
+	mix.HaltMusic()
+}
+
 func (a*Audio) SetVolume(vol float64){
 	mix.VolumeMusic(int(vol*100))
 }
@@ -37,3 +43,13 @@ type AudioComponent struct {
 
 func (*AudioComponent) OnLoad(){}
 func (*AudioComponent) Update(){}
+
+func (a*AudioComponent)Play(){
+	a.Audio.Play()
+}
+func (a*AudioComponent)Stop(){
+	a.Audio.Stop()
+}
+func (a*AudioComponent)SetVolume(vol float64){
+	a.Audio.SetVolume(vol)
+}
