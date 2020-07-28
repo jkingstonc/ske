@@ -44,13 +44,8 @@ type Layer struct {
 }
 
 type BufferedData struct {
-	Type   uint8
-	Data   interface{}
-	Colour Vec
-	Flags  uint8
-	V1     Vec
-	V2     Vec
-	Angle  float64
+	Drawable Drawable
+	Pos      *sdl.Rect
 }
 // store sorted layers
 type ZBuffer struct {
@@ -142,22 +137,22 @@ func fixCam(pos Vec) Vec{
 	return V3(pos.X*-1, pos.Y, pos.Z)
 }
 
-// draw a single instance of a BufferedData
-// NOTE the drawing convention is that pos stores the coordinates, NOT the x & y and w & h
-// TODO implement a z buffer
-func (s *SDLScreen) DrawRectScreen(v1, v2 Vec, col Vec, flags uint8) {
-	BufferedData := BufferedData{
-		Type:   D_RECT,
-		Colour: col,
-		Flags:  flags,
-		V1:     v1,
-		V2:     v2,
-	}
-	// add more layers until we get the desired z-depth
-	s.matchLayers(int(v1.Z))
-	// add the BufferedData to the layer
-	s.ZBuf.Layers[int(v1.Z)].BufferedDatas = append(s.ZBuf.Layers[int(v1.Z)].BufferedDatas, BufferedData)
-}
+//// draw a single instance of a BufferedData
+//// NOTE the drawing convention is that pos stores the coordinates, NOT the x & y and w & h
+//// TODO implement a z buffer
+//func (s *SDLScreen) DrawRectScreen(v1, v2 Vec, col Vec, flags uint8) {
+//	BufferedData := BufferedData{
+//		Type:   D_RECT,
+//		Colour: col,
+//		Flags:  flags,
+//		V1:     v1,
+//		V2:     v2,
+//	}
+//	// add more layers until we get the desired z-depth
+//	s.matchLayers(int(v1.Z))
+//	// add the BufferedData to the layer
+//	s.ZBuf.Layers[int(v1.Z)].BufferedDatas = append(s.ZBuf.Layers[int(v1.Z)].BufferedDatas, BufferedData)
+//}
 
 //func (s *SDLScreen) DrawRectWorld(v1, size, col Vec, flags uint8) {
 //	pos1, pos2 := s.project(v1, size)
@@ -293,7 +288,17 @@ func (s *SDLScreen) RendererPrepare() {
 	s.Renderer.Clear()
 }
 
+type BufferedDrawable struct {
+	Drawable Drawable
+	Pos      *sdl.Rect
+}
+
+func (s*SDLScreen) addBufferLayers(){
+
+}
+
 func (s *SDLScreen) FetchMeshComponents(){
+
 	for _, entity := range ECS.Entities{
 		if entity.Active{
 			// fetch the transform and the mesh of the entity
@@ -325,15 +330,23 @@ func (s *SDLScreen) FetchMeshComponents(){
 				// convert coordinate systems
 				fixedTransform := fixTransform(t.Pos)
 
-
 				if m.Target==WORLD_TARGET {
 					v1, v2 = s.project(fixedTransform, t.Scale, m.Target)
 				}else if m.Target == SCREEN_TARGET{
 					v1, v2 = s.project(t.Pos, m.Drawable.Size(), m.Target)
 				}
 				position := &sdl.Rect{int32(v1.X), int32(v1.Y), int32(v2.X - v1.X), int32(v2.Y - v1.Y)}
-				m.Drawable.Draw(position)
+
+				s.matchLayers(int(m.Order))
+
+				s.ZBuf.Layers[int(m.Order)].BufferedDatas = append(s.ZBuf.Layers[int(m.Order)].BufferedDatas, BufferedData{m.Drawable, position})
 			}
+		}
+	}
+
+	for _, layer := range s.ZBuf.Layers{
+		for _, data := range layer.BufferedDatas{
+			data.Drawable.Draw(data.Pos)
 		}
 	}
 }

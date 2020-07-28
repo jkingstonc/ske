@@ -9,7 +9,9 @@ func NewTextEntity(s string, anchor uint8) *Entity{
 	text := ECS.NewEntity("text")
 	text.Attach(
 		&MeshComponent{
-			Component: text.NewComponent(), Target: SCREEN_TARGET,
+			Component: text.NewComponent(),
+			Target:    SCREEN_TARGET,
+			Order:     UI_ORDER,
 		}, &TextComponent{
 			Component: text.NewComponent(),
 			Text: s,
