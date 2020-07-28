@@ -9,7 +9,7 @@ var (
 	// TODO link scenes with ECS correctly (perhaps ECS should hotswap scenes?)
 	ECS    		 *EntityManager
 	Scenes 		 *SceneManager
-	Loader 		 *FileManager
+	Kernel 		 *FileManager
 	Screen 	     *SDLScreen
 
 	DT           float64
@@ -50,8 +50,8 @@ func NewSKE(options *SkeOptions) *Ske {
 	Scenes = &SceneManager{}
 	Events = &EventManager{Listeners: make(map[string][]func(event Event))}
 	Inputs = &InputManager{}
-	Loader = &FileManager{LoadedFiles: make(map[string]Resource)}
-	Loader.Setup()
+	Kernel = &FileManager{LoadedFiles: make(map[string]Resource)}
+	Kernel.Setup()
 
 	return Engine
 }

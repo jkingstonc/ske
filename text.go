@@ -47,7 +47,7 @@ type TextComponent struct {
 
 func (t*TextComponent) OnLoad(){
 	// we first create the font
-	texture := makeText(t.Text, Loader.File(t.Font).(*FontResource), t.Size, sdl.Color{255,0,0,255})
+	texture := makeText(t.Text, Kernel.File(t.Font).(*FontResource), t.Size, sdl.Color{255,0,0,255})
 	t.Texture = texture
 
 	mesh := t.Entity.GetComponent(reflect.TypeOf(&MeshComponent{})).(*MeshComponent)
