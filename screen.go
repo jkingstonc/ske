@@ -124,6 +124,7 @@ func (s*SDLScreen) project(v, size Vec, target uint8) (Vec, Vec) {
 	}else if target == SCREEN_TARGET{
 		// projecting to the screen is as simple as returning the top left and top right coordinates given the
 		// position and the size
+		// TODO y needs to be flipped
 		return v, v.Add(size)
 	}
 	Assert(false, "must have a valid projection target")
@@ -256,6 +257,8 @@ func (s *SDLScreen) PollEvents() {
 		case *sdl.WindowEvent:
 			if t.Event == sdl.WINDOWEVENT_RESIZED {
 				if Engine.Options().Resizable {
+					Engine.options.Width = t.Data1
+					Engine.options.Height = t.Data2
 					s.Window.SetSize(t.Data1, t.Data2)
 				}
 			}
@@ -326,7 +329,7 @@ func (s *SDLScreen) FetchMeshComponents(){
 				if m.Target==WORLD_TARGET {
 					v1, v2 = s.project(fixedTransform, t.Scale, m.Target)
 				}else if m.Target == SCREEN_TARGET{
-					v1, v2 = s.project(fixedTransform, m.Drawable.Size(), m.Target)
+					v1, v2 = s.project(t.Pos, m.Drawable.Size(), m.Target)
 				}
 				position := &sdl.Rect{int32(v1.X), int32(v1.Y), int32(v2.X - v1.X), int32(v2.Y - v1.Y)}
 				m.Drawable.Draw(position)
