@@ -1,8 +1,14 @@
 package ske
 
-import "reflect"
+import (
+	"reflect"
+)
 
 // this file contains all the code to handle the UI components
+
+// NewContainerEntity creates an entity that acts as a container for other UI elements.
+// the job of the container is to order and best-fit the UI elements that are children of this container.
+func NewContainerEntity(){}
 
 // NewTextEntity creates an entity that can be attached to a game object, it will be rendered to the screen
 func NewTextEntity(s string, anchor uint8) *Entity{
@@ -19,24 +25,10 @@ func NewTextEntity(s string, anchor uint8) *Entity{
 			Size: 20,
 		}, &TransformComponent{
 			Component: text.NewComponent(),
-		}, &ConstraintComponent{Component: text.NewComponent()},
+		},
 		   &AnchorComponent{Component: text.NewComponent(), Anchor: anchor},
 	)
 	return text
-}
-
-// ConstraintComponent handles UI constraints.
-// it's job is to update the transform of the entity that it is attached to, given the parent constraints.
-type ConstraintComponent struct {
-	Component
-	// used for caching the entity transform
-	transform *TransformComponent
-}
-
-func (c*ConstraintComponent) OnLoad() {
-	c.transform = c.Entity.GetComponent(reflect.TypeOf(&TransformComponent{})).(*TransformComponent)
-}
-func (c*ConstraintComponent) Update() {
 }
 
 const (
@@ -52,13 +44,19 @@ const (
 // it's job is to update the transform of the entity that it is attached to, given the parent constraints.
 type AnchorComponent struct {
 	Component
-	Anchor uint8
+	// the anchor mode (CENTER, LEFT etc)
+	Anchor     uint8
+	// the boundaries that the anchor will place the UI element within.
+	// note, by default, this is the size of the screen.
+	// also note, X&Y is the top left, Z&W is the bottom right.
+	Boundaries Vec
 	// used for caching the entity transform
 	transform *TransformComponent
 }
 
 func (a*AnchorComponent) OnLoad() {
 	a.transform = a.Entity.GetComponent(reflect.TypeOf(&TransformComponent{})).(*TransformComponent)
+	a.Boundaries = V4(0,0, float64(Engine.options.Width), float64(Engine.options.Height))
 }
 func (a*AnchorComponent) Update() {
 	anchor := a.getAnchorPos()
@@ -67,25 +65,25 @@ func (a*AnchorComponent) Update() {
 
 // getAnchorPos calculates the coordinate given the anchor mode
 func (a*AnchorComponent) getAnchorPos() Vec{
-	// x & y here should be the constraints
-	x, y := a.transform.Pos.X, a.transform.Pos.Y
 
-	w, h := Screen.Window.GetSize()
+	// x & y is the center of the anchor boundaries
+	x := (a.Boundaries.Z - a.Boundaries.X) / 2
+	y := (a.Boundaries.W - a.Boundaries.Y) / 2
 
 	if a.Anchor & CENTER == 1 {
-		return V2(float64(w/2), float64(h/2))
+		return V2(x, y)
 	}
 
 	if a.Anchor & TOP > 0 {
-		y = 0
+		y = a.Boundaries.Y
 	}else if a.Anchor & BOTTOM > 0{
-		y = float64(h)
+		y = a.Boundaries.W
 	}
 
 	if a.Anchor & LEFT > 0 {
-		x=0
+		x=a.Boundaries.X
 	}else if a.Anchor & RIGHT > 0{
-		x=float64(w)
+		x=a.Boundaries.Z
 	}
 
 	return V2(x,y)
