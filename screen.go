@@ -97,11 +97,15 @@ func (s*SDLScreen) ScreenToWorld(v Vec) Vec {
 // get a world-to-screen projection (2 coordinates) from a world position and a size
 func (s*SDLScreen) project(v, size Vec, target uint8) (Vec, Vec) {
 	if target == WORLD_TARGET {
-		// TODO this may have broken other functions
-		// center the position relative to the screen
-		v = v.Add(size.Div(2))
-		// first take the position
-		pos1 := v.Add(s.Cam.Pos)
+		//// TODO this may have broken other functions
+		//// center the position relative to the screen
+		//v = v.Add(size.Div(2))
+
+		// perhaps we need to flip the x axis of the camera
+		fixedCam := fixCam(s.Cam.Pos)
+
+		// first add the camera coordinates to the position so we are aligned with the camera
+		pos1 := v.Add(fixedCam)
 		// then place it in world space
 		pos1 = pos1.Mul(WORLD_UNIT_SIZE)
 		// get the corner positions using the unit size
@@ -110,18 +114,31 @@ func (s*SDLScreen) project(v, size Vec, target uint8) (Vec, Vec) {
 		// bottom right corner
 		pos2 := pos1.Add(size.Mul(WORLD_UNIT_SIZE))
 		// zoom with the camera
-		pos1 = pos1.Div(s.Cam.Pos.Z)
-		pos2 = pos2.Div(s.Cam.Pos.Z)
+		pos1 = pos1.Div(fixedCam.Z)
+		pos2 = pos2.Div(fixedCam.Z)
 		// finally center on screen
 		width, height := s.Window.GetSize()
 		pos1 = pos1.Add(V2(float64(width/2), float64(height/2)))
 		pos2 = pos2.Add(V2(float64(width/2), float64(height/2)))
 		return pos1, pos2
 	}else if target == SCREEN_TARGET{
+		// projecting to the screen is as simple as returning the top left and top right coordinates given the
+		// position and the size
 		return v, v.Add(size)
 	}
 	Assert(false, "must have a valid projection target")
 	return Vec{}, Vec{}
+}
+
+// fixTransform takes a world coordinate, and switches the axis so it aligns with the screen coordinates.
+// the x axis of the transform and the screen match, but the y is flipped.
+func fixTransform(pos Vec) Vec{
+	return V2(pos.X, pos.Y*-1)
+}
+
+// fixTransform takes the camera coordinate and flipps the x-axis. Dont ask why this is needed
+func fixCam(pos Vec) Vec{
+	return V3(pos.X*-1, pos.Y, pos.Z)
 }
 
 // draw a single instance of a BufferedData
@@ -300,10 +317,16 @@ func (s *SDLScreen) FetchMeshComponents(){
 				Assert(m.Drawable!=nil, "mesh drawable is nil")
 				// we need to flip the y as the world y is inverted to the screen y
 				var v1, v2 Vec
+
+				// as the screen coordinates are different to world coordinates (y is flipped), we need to
+				// convert coordinate systems
+				fixedTransform := fixTransform(t.Pos)
+
+
 				if m.Target==WORLD_TARGET {
-					v1, v2 = s.project(V3(t.Pos.X, t.Pos.Y*-1, t.Pos.Z), t.Scale, m.Target)
+					v1, v2 = s.project(fixedTransform, t.Scale, m.Target)
 				}else if m.Target == SCREEN_TARGET{
-					v1, v2 = s.project(V3(t.Pos.X, t.Pos.Y*-1, t.Pos.Z), m.Drawable.Size(), m.Target)
+					v1, v2 = s.project(fixedTransform, m.Drawable.Size(), m.Target)
 				}
 				position := &sdl.Rect{int32(v1.X), int32(v1.Y), int32(v2.X - v1.X), int32(v2.Y - v1.Y)}
 				m.Drawable.Draw(position)
